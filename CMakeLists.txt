@@ -6,15 +6,14 @@ list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/sfml
 )
 
-include(add_warnings)
+# include(add_warnings)
 include(add_sources)
 
 
 add_definitions(-std=c++17)
-add_warnings()
+# add_warnings()
 
 declare_library(gbemu-core src)
-
 set(PLATFORM "SDL2" CACHE STRING "Set Frontend")
 message("Platform: ${PLATFORM}")
 
@@ -43,8 +42,8 @@ endif()
 # TermOx target
 if (PLATFORM STREQUAL "TERMOX")
   add_subdirectory(external/TermOx)
-  declare_executable(gbemu platforms/termox)
-  target_link_libraries(gbemu gbemu-core termox)
+  add_executable(gbemu-termox platforms/termox/main.cpp)
+  target_link_libraries(gbemu-termox gbemu-core TermOx)
 endif()
 
 # Test target
