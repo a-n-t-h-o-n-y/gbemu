@@ -6,6 +6,8 @@
 
 class FrameBuffer {
 public:
+    FrameBuffer() = default;
+
     FrameBuffer(uint width, uint height);
 
     void set_pixel(uint x, uint y, Color color);
@@ -14,8 +16,8 @@ public:
     void reset();
 
 private:
-    uint width;
-    uint height;
+    uint width = 0;
+    uint height = 0;
 
     uint pixel_index(uint x, uint y) const;
 
