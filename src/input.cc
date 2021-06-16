@@ -11,14 +11,16 @@ void Input::button_released(GbButton button) {
 }
 
 void Input::set_button(GbButton button, bool set) {
-    if (button == GbButton::Up) { up = set; }
-    if (button == GbButton::Down) { down = set; }
-    if (button == GbButton::Left) { left = set; }
-    if (button == GbButton::Right) { right = set; }
-    if (button == GbButton::A) { a = set; }
-    if (button == GbButton::B) { b = set; }
-    if (button == GbButton::Select) { select = set; }
-    if (button == GbButton::Start) { start = set; }
+    switch(button) {
+        case GbButton::Up: up = set; break;
+        case GbButton::Down: down = set; break;
+        case GbButton::Left: left = set; break;
+        case GbButton::Right: right = set; break;
+        case GbButton::A: a = set; break;
+        case GbButton::B: b = set; break;
+        case GbButton::Select: select = set; break;
+        case GbButton::Start: start = set; break;
+    }
 }
 
 void Input::write(u8 set) {
