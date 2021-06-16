@@ -1,5 +1,6 @@
 #include <chrono>
 #include <fstream>
+#include <map>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -45,6 +46,8 @@ class Gameboy_widget
     using Base_t =
         Color_graph_static_bounds<int, 0, gb_width - 1, gb_height - 1, 0>;
 
+    using Clock_t = std::chrono::high_resolution_clock;
+
    public:
     Gameboy_widget(std::vector<u8> rom_data,
                    Options& options,
@@ -64,21 +67,29 @@ class Gameboy_widget
             [this](FrameBuffer const& buf) { next_buffer_ = buf; });
 
         loop_.run_async([this](auto& queue) {
+            auto const now = Clock_t::now();
             {
                 auto const guard = std::lock_guard{button_mtx_};
-                if (!last_keypress.has_value() && button_.has_value()) {
+                if (button_.has_value()) {
                     emulator_.button_pressed(*button_);
-                    last_keypress = std::chrono::high_resolution_clock::now();
+                    live_keypresses_[*button_] = now;
+                    button_                    = std::nullopt;
                 }
-                else if (last_keypress.has_value() && button_.has_value() &&
-                         (std::chrono::high_resolution_clock::now() -
-                          *last_keypress) >= std::chrono::milliseconds{25}) {
-                    // no key release events in the terminal so use timeout.
-                    // not perfect but it is as good as it'll get for now.
-                    emulator_.button_released(*button_);
-                    button_       = std::nullopt;
-                    last_keypress = std::nullopt;
+            }
+
+            // Simulate key release after 100 ms without being pressed.
+            // Terminal cannot provide key release events.
+            // Because of how the terminal works, it isn't possible to have two
+            // keys pressed at the same time.
+            for (auto iter = std::begin(live_keypresses_);
+                 iter != std::end(live_keypresses_);) {
+                auto const& [btn, time] = *iter;
+                if ((now - time) >= std::chrono::milliseconds{100}) {
+                    emulator_.button_released(btn);
+                    iter = live_keypresses_.erase(iter);
                 }
+                else
+                    ++iter;
             }
             emulator_.tick();  // This can assign to next_buffer_.
             if (next_buffer_.has_value()) {
@@ -133,7 +144,7 @@ class Gameboy_widget
     std::optional<::FrameBuffer> next_buffer_ = std::nullopt;
     std::optional<::GbButton> button_         = std::nullopt;
     std::mutex button_mtx_;
-    std::optional<std::chrono::high_resolution_clock::time_point> last_keypress;
+    std::map<::GbButton, Clock_t::time_point> live_keypresses_;
 
    private:
     void handle_next_frame(FrameBuffer buf)
