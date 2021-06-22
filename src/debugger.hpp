@@ -1,10 +1,10 @@
-#pragma once
+#ifndef GBEMU_DEBUGGER_HPP
+#define GBEMU_DEBUGGER_HPP
+#include <string>
+#include <vector>
 
 #include "definitions.h"
 #include "options.h"
-
-#include <string>
-#include <vector>
 
 class Gameboy;
 class CPU;
@@ -40,13 +40,13 @@ struct Command {
 };
 
 class Debugger {
-public:
+   public:
     Debugger(Gameboy& inGameboy, Options& inOptions);
 
     void set_enabled(bool enabled);
     void cycle();
 
-private:
+   private:
     Gameboy& gameboy;
     Options& options;
 
@@ -78,11 +78,13 @@ private:
 
     bool enabled;
 
-    int steps = 0;
+    int steps    = 0;
     uint counter = 0;
 
-    u16 breakpoint_addr = 0;
+    u16 breakpoint_addr       = 0;
     u16 breakpoint_value_addr = 0;
-    u8 breakpoint_value = 0;
-    bool debugger_enabled = true;
+    u8 breakpoint_value       = 0;
+    bool debugger_enabled     = true;
 };
+
+#endif  // GBEMU_DEBUGGER_HPP

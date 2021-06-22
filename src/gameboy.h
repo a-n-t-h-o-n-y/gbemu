@@ -1,7 +1,10 @@
 #pragma once
+#include <functional>
+#include <memory>
+#include <utility>
 
-#include "cpu/cpu.h"
-#include "debugger.h"
+#include "cpu/cpu.hpp"
+#include "debugger.hpp"
 #include "input.h"
 #include "options.h"
 #include "serial.h"
@@ -9,15 +12,13 @@
 #include "util/log.h"
 #include "video/video.h"
 
-#include <functional>
-#include <memory>
-#include <utility>
-
 typedef std::function<bool(void)> should_close_callback_t;
 
 class Gameboy {
-public:
-    Gameboy(std::vector<u8> cartridge_data, Options& options, std::vector<u8> save_data = {});
+   public:
+    Gameboy(std::vector<u8> cartridge_data,
+            Options& options,
+            std::vector<u8> save_data = {});
 
     void run(const should_close_callback_t& _should_close_callback,
              const vblank_callback_t& _vblank_callback);
@@ -33,11 +34,13 @@ public:
 
     void tick();
 
-    template <typename F> void register_draw_callback(F&& fn) {
+    template <typename F>
+    void register_draw_callback(F&& fn)
+    {
         video.register_vblank_callback(std::forward<F>(fn));
     }
 
-private:
+   private:
     std::shared_ptr<Cartridge> cartridge;
     Input input;
     CPU cpu;
@@ -49,8 +52,6 @@ private:
     Debugger debugger;
 
     friend class Debugger;
-
-    uint elapsed_cycles = 0;
 
     should_close_callback_t should_close_callback;
 };

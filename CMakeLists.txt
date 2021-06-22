@@ -1,18 +1,6 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.9)
 project(gbemu)
 
-list(APPEND CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  ${CMAKE_CURRENT_SOURCE_DIR}/platforms/sfml
-)
-
-# include(add_warnings)
-# include(add_sources)
-
-# add_definitions(-std=c++17)
-# add_warnings()
-
-# declare_library(gbemu-core src)
 add_library(gbemu-core
     src/address.cc
     src/debugger.cc
@@ -39,7 +27,6 @@ add_library(gbemu-core
 target_include_directories(gbemu-core
     PUBLIC
         ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/platforms/cli
 )
 
 target_compile_features(gbemu-core
@@ -82,4 +69,3 @@ target_compile_options(gbemu-core
 # Test target
 # declare_executable(gbemu-test platforms/test)
 # target_link_libraries(gbemu-test gbemu-core)
-

@@ -3,7 +3,7 @@
 #include "framebuffer.h"
 #include "tile.h"
 
-#include "../mmu.h"
+#include "../mmu.hpp"
 #include "../register.h"
 #include "../definitions.h"
 #include "../options.h"

@@ -1,4 +1,4 @@
-#include "cpu.h"
+#include "cpu.hpp"
 /* clang-format off */
 
 /**

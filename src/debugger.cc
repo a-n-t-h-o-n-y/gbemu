@@ -1,7 +1,7 @@
-#include "debugger.h"
+#include "debugger.hpp"
 
 #include "gameboy.h"
-#include "cpu/cpu.h"
+#include "cpu/cpu.hpp"
 #include "util/log.h"
 #include "util/string_utils.h"
 

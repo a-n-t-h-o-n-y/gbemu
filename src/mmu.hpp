@@ -1,11 +1,11 @@
-#pragma once
+#ifndef GBEMU_MMU_HPP
+#define GBEMU_MMU_HPP
+#include <memory>
+#include <vector>
 
 #include "address.h"
-#include "options.h"
 #include "cartridge/cartridge.h"
-
-#include <vector>
-#include <memory>
+#include "options.h"
 
 class Video;
 class CPU;
@@ -14,13 +14,19 @@ class Input;
 class Timer;
 
 class MMU {
-public:
-    MMU(std::shared_ptr<Cartridge> inCartridge, CPU& inCPU, Video& inVideo, Input& input, Serial& serial, Timer& timer, Options& options);
+   public:
+    MMU(std::shared_ptr<Cartridge> inCartridge,
+        CPU& inCPU,
+        Video& inVideo,
+        Input& input,
+        Serial& serial,
+        Timer& timer,
+        Options& options);
 
     u8 read(const Address& address) const;
     void write(const Address& address, u8 byte);
 
-private:
+   private:
     bool boot_rom_active() const;
 
     u8 read_io(const Address& address) const;
@@ -43,3 +49,5 @@ private:
 
     friend class Debugger;
 };
+
+#endif  // GBEMU_MMU_HPP

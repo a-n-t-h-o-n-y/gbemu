@@ -31,9 +31,8 @@ void Gameboy::run(const should_close_callback_t& _should_close_callback,
 
     video.register_vblank_callback(_vblank_callback);
 
-    while (!should_close_callback()) {
+    while (!should_close_callback())
         tick();
-    }
 
     debugger.set_enabled(false);
 }
@@ -41,8 +40,7 @@ void Gameboy::run(const should_close_callback_t& _should_close_callback,
 void Gameboy::tick() {
     debugger.cycle();
 
-    auto cycles = cpu.tick();
-    elapsed_cycles += cycles.cycles;
+    auto const cycles = cpu.tick();
 
     video.tick(cycles);
     timer.tick(cycles.cycles);

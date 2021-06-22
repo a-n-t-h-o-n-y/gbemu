@@ -1,7 +1,7 @@
 #include "video.h"
 
 #include "color.h"
-#include "../cpu/cpu.h"
+#include "../cpu/cpu.hpp"
 
 #include "../util/bitwise.h"
 #include "../util/log.h"
