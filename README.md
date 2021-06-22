@@ -18,10 +18,9 @@ This builds two versions of the emulator:
 ## Playing
 
 ```
-usage: gbemu <rom_file> [--debug] [--trace] [--silent] [--exit-on-infinite-jr] [--print-serial-output]
+usage: gbemu <rom_file> [--trace] [--silent] [--exit-on-infinite-jr] [--print-serial-output]
 
 arguments:
-  --debug                   Enable the debugger
   --exit-on-infinite-jr     Stop emulation if an infinite JR loop is detected
   --print-serial-output     Print data sent to the serial port
   --trace                   Enable trace logging

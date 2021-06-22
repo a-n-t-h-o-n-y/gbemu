@@ -1,10 +1,10 @@
 #pragma once
 
 #include "definitions.h"
-#include "register.h"
+#include "register.hpp"
 
 class Timer {
-public:
+   public:
     void tick(uint cycles);
 
     u8 get_divider() const;
@@ -16,10 +16,10 @@ public:
     void set_timer_modulo(u8 value);
     void set_timer_control(u8 value);
 
-private:
-    ByteRegister divider;
-    ByteRegister timer_counter;
+   private:
+    FlagRegister divider;
+    FlagRegister timer_counter;
 
-    ByteRegister timer_modulo;
-    ByteRegister timer_control;
+    FlagRegister timer_modulo;
+    FlagRegister timer_control;
 };

@@ -12,13 +12,6 @@ using u16 = uint16_t;
 using s8 = int8_t;
 using s16 = uint16_t;
 
-struct Noncopyable {
-    Noncopyable& operator=(const Noncopyable&) = delete;
-    Noncopyable(const Noncopyable&) = delete;
-    Noncopyable() = default;
-    ~Noncopyable() = default;
-};
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 template <typename... T> void unused(T&&... unused_vars) {}

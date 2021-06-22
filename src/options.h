@@ -3,7 +3,6 @@
 
 /// Command line options.
 struct Options {
-    bool debugger              = false;
     bool trace                 = false;
     bool disable_logs          = false;
     bool headless              = false;

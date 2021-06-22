@@ -2,12 +2,9 @@ cmake_minimum_required(VERSION 3.9)
 project(gbemu)
 
 add_library(gbemu-core
-    src/address.cc
-    src/debugger.cc
     src/gameboy.cc
     src/input.cc
     src/mmu.cc
-    src/register.cc
     src/serial.cc
     src/timer.cc
     src/cartridge/cartridge.cc

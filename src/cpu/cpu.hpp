@@ -1,10 +1,10 @@
 #ifndef GBEMU_CPU_CPU_HPP
 #define GBEMU_CPU_CPU_HPP
 
-#include "../address.h"
+#include "../address.hpp"
 #include "../mmu.hpp"
 #include "../options.h"
-#include "../register.h"
+#include "../register.hpp"
 
 enum class Condition {
     NZ,
@@ -14,54 +14,62 @@ enum class Condition {
 };
 
 namespace rst {
-const u16 rst1 = 0x00;
-const u16 rst2 = 0x08;
-const u16 rst3 = 0x10;
-const u16 rst4 = 0x18;
-const u16 rst5 = 0x20;
-const u16 rst6 = 0x28;
-const u16 rst7 = 0x30;
-const u16 rst8 = 0x38;
+
+u16 const rst1 = 0x00;
+u16 const rst2 = 0x08;
+u16 const rst3 = 0x10;
+u16 const rst4 = 0x18;
+u16 const rst5 = 0x20;
+u16 const rst6 = 0x28;
+u16 const rst7 = 0x30;
+u16 const rst8 = 0x38;
+
 }  // namespace rst
 
 namespace interrupts {
-const u16 vblank      = 0x40;
-const u16 lcdc_status = 0x48;
-const u16 timer       = 0x50;
-const u16 serial      = 0x58;
-const u16 joypad      = 0x60;
+
+u16 const vblank      = 0x40;
+u16 const lcdc_status = 0x48;
+u16 const timer       = 0x50;
+u16 const serial      = 0x58;
+u16 const joypad      = 0x60;
+
 }  // namespace interrupts
 
 class CPU {
    public:
     CPU(MMU& inMMU, Options& inOptions);
 
-    Cycles tick();
+   public:
+    auto tick() -> Cycles;
 
-    Cycles execute_opcode(u8 opcode, u16 opcode_pc);
+    auto execute_opcode(u8 opcode, u16 opcode_pc) -> Cycles;
 
-    Cycles execute_normal_opcode(u8 opcode, u16 opcode_pc);
-    Cycles execute_cb_opcode(u8 opcode, u16 opcode_pc);
+    auto execute_normal_opcode(u8 opcode, u16 opcode_pc) -> Cycles;
 
-    ByteRegister interrupt_flag;
-    ByteRegister interrupt_enabled;
+    auto execute_cb_opcode(u8 opcode, u16 opcode_pc) -> Cycles;
+
+   public:
+    FlagRegister interrupt_flag;
+    FlagRegister interrupt_enabled;
 
    private:
     void handle_interrupts();
-    bool handle_interrupt(u8 interrupt_bit,
-                          u16 interrupt_vector,
-                          u8 fired_interrupts);
 
+    auto handle_interrupt(u8 interrupt_bit,
+                          u16 interrupt_vector,
+                          u8 fired_interrupts) -> bool;
+
+   private:
     MMU& mmu;
     Options& options;
 
     bool interrupts_enabled = false;
     bool halted             = false;
-
-    bool branch_taken = false;
+    bool branch_taken       = false;
 
     /* Basic registers */
-    ByteRegister a, b, c, d, e, h, l;
+    FlagRegister a, b, c, d, e, h, l;
 
     /* 'Group' registers for operations which use two registers as a word */
     RegisterPair af;
@@ -78,6 +86,7 @@ class CPU {
      */
     FlagRegister f;
 
+   private:
     void set_flag_zero(bool set);
     void set_flag_subtract(bool set);
     void set_flag_half_carry(bool set);
@@ -86,7 +95,7 @@ class CPU {
     /* Note: Not const because this also sets the 'branch_taken' member
      * variable if a branch is taken. This allows the correct cycle
      * count to be used */
-    bool is_condition(Condition condition);
+    auto is_condition(Condition condition) -> bool;
 
     /* Program counter */
     WordRegister pc;
@@ -94,12 +103,14 @@ class CPU {
     /* Stack pointer */
     WordRegister sp;
 
-    u8 get_byte_from_pc();
-    s8 get_signed_byte_from_pc();
-    u16 get_word_from_pc();
+    auto get_byte_from_pc() -> u8;
+    auto get_signed_byte_from_pc() -> s8;
+    auto get_word_from_pc() -> u16;
 
-    void stack_push(const WordValue& reg);
-    void stack_pop(WordValue& reg);
+    void stack_push(WordRegister reg);
+    void stack_push(RegisterPair reg);
+    void stack_pop(WordRegister& reg);
+    void stack_pop(RegisterPair& reg);
 
     /* Opcode Helper Functions */
 
@@ -107,19 +118,19 @@ class CPU {
     void _opcode_adc(u8 value);
 
     void opcode_adc();
-    void opcode_adc(const ByteRegister& reg);
-    void opcode_adc(const Address&& addr);
+    void opcode_adc(FlagRegister reg);
+    void opcode_adc(Address addr);
 
     /* ADD */
     void _opcode_add(u8 reg, u8 value);
 
     void opcode_add_a();
-    void opcode_add_a(const ByteRegister& reg);
-    void opcode_add_a(const Address& addr);
+    void opcode_add_a(FlagRegister reg);
+    void opcode_add_a(Address addr);
 
     void _opcode_add_hl(u16 value);
-    void opcode_add_hl(const RegisterPair& reg_pair);
-    void opcode_add_hl(const WordRegister& word_reg);
+    void opcode_add_hl(RegisterPair reg_pair);
+    void opcode_add_hl(WordRegister word_reg);
 
     void opcode_add_sp();
 
@@ -129,14 +140,14 @@ class CPU {
     void _opcode_and(u8 value);
 
     void opcode_and();
-    void opcode_and(ByteRegister& reg);
-    void opcode_and(Address&& addr);
+    void opcode_and(FlagRegister reg);
+    void opcode_and(Address addr);
 
     /* BIT */
     void _opcode_bit(u8 bit, u8 value);
 
-    void opcode_bit(u8 bit, ByteRegister& reg);
-    void opcode_bit(u8 bit, Address&& addr);
+    void opcode_bit(u8 bit, FlagRegister reg);
+    void opcode_bit(u8 bit, Address addr);
 
     /* CALL */
     void opcode_call();
@@ -149,8 +160,8 @@ class CPU {
     void _opcode_cp(u8 value);
 
     void opcode_cp();
-    void opcode_cp(const ByteRegister& reg);
-    void opcode_cp(const Address& addr);
+    void opcode_cp(FlagRegister reg);
+    void opcode_cp(Address addr);
 
     /* CPL */
     void opcode_cpl();
@@ -159,10 +170,10 @@ class CPU {
     void opcode_daa();
 
     /* DEC */
-    void opcode_dec(ByteRegister& reg);
+    void opcode_dec(FlagRegister& reg);
     void opcode_dec(RegisterPair& reg);
     void opcode_dec(WordRegister& reg);
-    void opcode_dec(Address&& addr);
+    void opcode_dec(Address addr);
 
     /* DI */
     void opcode_di();
@@ -171,15 +182,15 @@ class CPU {
     void opcode_ei();
 
     /* INC */
-    void opcode_inc(ByteRegister& reg);
+    void opcode_inc(FlagRegister& reg);
     void opcode_inc(RegisterPair& reg);
     void opcode_inc(WordRegister& reg);
-    void opcode_inc(Address&& addr);
+    void opcode_inc(Address addr);
 
     /* JP */
     void opcode_jp();
     void opcode_jp(Condition condition);
-    void opcode_jp(const Address& addr);
+    void opcode_jp(Address addr);
 
     /* JR */
     void opcode_jr();
@@ -189,28 +200,28 @@ class CPU {
     void opcode_halt();
 
     /* LD */
-    void opcode_ld(ByteRegister& reg);
-    void opcode_ld(ByteRegister& reg, const ByteRegister& byte_reg);
-    void opcode_ld(ByteRegister& reg, const Address& address);
+    void opcode_ld(FlagRegister& reg);
+    void opcode_ld(FlagRegister& reg, FlagRegister byte_reg);
+    void opcode_ld(FlagRegister& reg, Address address);
 
     void opcode_ld(RegisterPair& reg);
 
     void opcode_ld(WordRegister& reg);
-    void opcode_ld(WordRegister& reg, const RegisterPair& reg_pair);
+    void opcode_ld(WordRegister& reg, RegisterPair reg_pair);
 
-    void opcode_ld(const Address& address);
-    void opcode_ld(const Address& address, const ByteRegister& byte_reg);
-    void opcode_ld(const Address& address, const WordRegister& word_reg);
+    void opcode_ld(Address address);
+    void opcode_ld(Address address, FlagRegister byte_reg);
+    void opcode_ld(Address address, WordRegister word_reg);
 
     // (nn), A
-    void opcode_ld_to_addr(const ByteRegister& reg);
-    void opcode_ld_from_addr(ByteRegister& reg);
+    void opcode_ld_to_addr(FlagRegister reg);
+    void opcode_ld_from_addr(FlagRegister& reg);
 
     /* LDD */
     u8 _opcode_ldd(u8 value);
 
-    void opcode_ldd(ByteRegister& reg, const Address& address);
-    void opcode_ldd(const Address& address, const ByteRegister& reg);
+    void opcode_ldd(FlagRegister& reg, Address address);
+    void opcode_ldd(Address address, FlagRegister reg);
 
     /* LDH */
     // A, (n)
@@ -226,8 +237,8 @@ class CPU {
     void opcode_ldhl();
 
     /* LDI */
-    void opcode_ldi(ByteRegister& reg, const Address& address);
-    void opcode_ldi(const Address& address, const ByteRegister& reg);
+    void opcode_ldi(FlagRegister& reg, Address address);
+    void opcode_ldi(Address address, FlagRegister reg);
 
     /* NOP */
     void opcode_nop();
@@ -236,18 +247,18 @@ class CPU {
     void _opcode_or(u8 value);
 
     void opcode_or();
-    void opcode_or(const ByteRegister& reg);
-    void opcode_or(const Address& addr);
+    void opcode_or(FlagRegister reg);
+    void opcode_or(Address addr);
 
     /* POP */
     void opcode_pop(RegisterPair& reg);
 
     /* PUSH */
-    void opcode_push(const RegisterPair& reg);
+    void opcode_push(RegisterPair reg);
 
     /* RES */
-    void opcode_res(u8 bit, ByteRegister& reg);
-    void opcode_res(u8 bit, Address&& addr);
+    void opcode_res(u8 bit, FlagRegister& reg);
+    void opcode_res(u8 bit, Address addr);
 
     /* RET */
     void opcode_ret();
@@ -257,32 +268,32 @@ class CPU {
     void opcode_reti();
 
     /* RL */
-    u8 _opcode_rl(u8 value);
+    auto _opcode_rl(u8 value) -> u8;
 
     void opcode_rla();
-    void opcode_rl(ByteRegister& reg);
-    void opcode_rl(Address&& addr);
+    void opcode_rl(FlagRegister& reg);
+    void opcode_rl(Address addr);
 
     /* RLC */
-    u8 _opcode_rlc(u8 value);
+    auto _opcode_rlc(u8 value) -> u8;
 
     void opcode_rlca();
-    void opcode_rlc(ByteRegister& reg);
-    void opcode_rlc(Address&& addr);
+    void opcode_rlc(FlagRegister& reg);
+    void opcode_rlc(Address addr);
 
     /* RR */
-    u8 _opcode_rr(u8 value);
+    auto _opcode_rr(u8 value) -> u8;
 
     void opcode_rra();
-    void opcode_rr(ByteRegister& reg);
-    void opcode_rr(Address&& addr);
+    void opcode_rr(FlagRegister& reg);
+    void opcode_rr(Address addr);
 
     /* RRC */
     u8 _opcode_rrc(u8 value);
 
     void opcode_rrca();
-    void opcode_rrc(ByteRegister& reg);
-    void opcode_rrc(Address&& addr);
+    void opcode_rrc(FlagRegister& reg);
+    void opcode_rrc(Address addr);
 
     /* RST */
     void opcode_rst(u8 offset);
@@ -291,33 +302,33 @@ class CPU {
     void _opcode_sbc(u8 value);
 
     void opcode_sbc();
-    void opcode_sbc(ByteRegister& reg);
-    void opcode_sbc(Address&& addr);
+    void opcode_sbc(FlagRegister& reg);
+    void opcode_sbc(Address addr);
 
     /* SCF */
     void opcode_scf();
 
     /* SET */
-    void opcode_set(u8 bit, ByteRegister& reg);
-    void opcode_set(u8 bit, Address&& addr);
+    void opcode_set(u8 bit, FlagRegister& reg);
+    void opcode_set(u8 bit, Address addr);
 
     /* SLA */
-    u8 _opcode_sla(u8 value);
+    auto _opcode_sla(u8 value) -> u8;
 
-    void opcode_sla(ByteRegister& reg);
-    void opcode_sla(Address&& addr);
+    void opcode_sla(FlagRegister& reg);
+    void opcode_sla(Address addr);
 
     /* SRA */
-    u8 _opcode_sra(u8 value);
+    auto _opcode_sra(u8 value) -> u8;
 
-    void opcode_sra(ByteRegister& reg);
-    void opcode_sra(Address&& addr);
+    void opcode_sra(FlagRegister& reg);
+    void opcode_sra(Address addr);
 
     /* SRL */
-    u8 _opcode_srl(u8 value);
+    auto _opcode_srl(u8 value) -> u8;
 
-    void opcode_srl(ByteRegister& reg);
-    void opcode_srl(Address&& addr);
+    void opcode_srl(FlagRegister& reg);
+    void opcode_srl(Address addr);
 
     /* STOP */
     void opcode_stop();
@@ -326,21 +337,21 @@ class CPU {
     void _opcode_sub(u8 value);
 
     void opcode_sub();
-    void opcode_sub(ByteRegister& reg);
-    void opcode_sub(Address&& addr);
+    void opcode_sub(FlagRegister& reg);
+    void opcode_sub(Address addr);
 
     /* SWAP */
-    u8 _opcode_swap(u8 value);
+    auto _opcode_swap(u8 value) -> u8;
 
-    void opcode_swap(ByteRegister& reg);
-    void opcode_swap(Address&& addr);
+    void opcode_swap(FlagRegister& reg);
+    void opcode_swap(Address addr);
 
     /* XOR */
     void _opcode_xor(u8 value);
 
     void opcode_xor();
-    void opcode_xor(const ByteRegister& reg);
-    void opcode_xor(const Address& addr);
+    void opcode_xor(FlagRegister reg);
+    void opcode_xor(Address addr);
 
     /* Opcodes */
     void opcode_00();
@@ -857,8 +868,6 @@ class CPU {
     void opcode_CB_FD();
     void opcode_CB_FE();
     void opcode_CB_FF();
-
-    friend class Debugger;
 };
 
 #endif  // GBEMU_CPU_CPU_HPP

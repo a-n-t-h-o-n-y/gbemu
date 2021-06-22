@@ -98,7 +98,7 @@ bool CPU::handle_interrupt(u8 interrupt_bit,
 
 u8 CPU::get_byte_from_pc()
 {
-    u8 byte = mmu.read(Address(pc));
+    u8 byte = mmu.read(to_address(pc));
     pc.increment();
 
     return byte;
@@ -140,19 +140,38 @@ bool CPU::is_condition(Condition condition)
     return should_branch;
 }
 
-void CPU::stack_push(const WordValue& reg)
+void CPU::stack_push(WordRegister reg)
 {
     sp.decrement();
-    mmu.write(Address(sp), reg.high());
+    mmu.write(to_address(sp), reg.high());
     sp.decrement();
-    mmu.write(Address(sp), reg.low());
+    mmu.write(to_address(sp), reg.low());
 }
 
-void CPU::stack_pop(WordValue& reg)
+void CPU::stack_push(RegisterPair reg)
 {
-    u8 low_byte = mmu.read(Address(sp));
+    sp.decrement();
+    mmu.write(to_address(sp), reg.high());
+    sp.decrement();
+    mmu.write(to_address(sp), reg.low());
+}
+
+void CPU::stack_pop(WordRegister& reg)
+{
+    u8 low_byte = mmu.read(to_address(sp));
     sp.increment();
-    u8 high_byte = mmu.read(Address(sp));
+    u8 high_byte = mmu.read(to_address(sp));
+    sp.increment();
+
+    u16 value = compose_bytes(high_byte, low_byte);
+    reg.set(value);
+}
+
+void CPU::stack_pop(RegisterPair& reg)
+{
+    u8 low_byte = mmu.read(to_address(sp));
+    sp.increment();
+    u8 high_byte = mmu.read(to_address(sp));
     sp.increment();
 
     u16 value = compose_bytes(high_byte, low_byte);

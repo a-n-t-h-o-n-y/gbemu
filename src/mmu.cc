@@ -9,79 +9,67 @@
 #include "util/log.h"
 #include "video/video.h"
 
-MMU::MMU(std::shared_ptr<Cartridge> inCartridge,
+MMU::MMU(Cartridge& inCartridge,
          CPU& inCPU,
          Video& inVideo,
          Input& inInput,
          Serial& inSerial,
-         Timer& inTimer,
-         Options& inOptions)
-    : cartridge(inCartridge),
-      cpu(inCPU),
-      video(inVideo),
-      input(inInput),
-      serial(inSerial),
-      timer(inTimer),
-      options(inOptions)
+         Timer& inTimer)
+    : cartridge{inCartridge},
+      cpu{inCPU},
+      video{inVideo},
+      input{inInput},
+      serial{inSerial},
+      timer{inTimer}
 {
     memory = std::vector<u8>(0x10000);
 }
 
-u8 MMU::read(const Address& address) const
+auto MMU::read(Address address) const -> u8
 {
-    if (address.in_range(0x0, 0x7FFF)) {
-        if (address.in_range(0x0, 0xFF) && boot_rom_active()) {
+    /* VRAM */
+    if (in_range(address, {0x8000, 0x9FFF}))
+        return memory_read(address);
+
+    /* Mapped IO */
+    if (in_range(address, {0xFF00, 0xFF7F}))
+        return read_io(address);
+
+    if (in_range(address, {0x0, 0x7FFF})) {
+        if (in_range(address, {0x0, 0xFF}) && boot_rom_active())
             return bootDMG[address.value()];
-        }
-        return cartridge->read(address);
+        else
+            return cartridge.read(address);
     }
 
-    /* VRAM */
-    if (address.in_range(0x8000, 0x9FFF)) {
+    /* Zero Page ram */
+    if (in_range(address, {0xFF80, 0xFFFE}))
         return memory_read(address);
-    }
 
     /* External (cartridge) RAM */
-    if (address.in_range(0xA000, 0xBFFF)) {
-        return cartridge->read(address);
-    }
+    if (in_range(address, {0xA000, 0xBFFF}))
+        return cartridge.read(address);
 
     /* Internal work RAM */
-    if (address.in_range(0xC000, 0xDFFF)) {
+    if (in_range(address, {0xC000, 0xDFFF}))
         return memory_read(address);
-    }
 
-    if (address.in_range(0xE000, 0xFDFF)) {
-        /* log_warn("Attempting to read from mirrored work RAM"); */
-        auto mirrored_address = Address(address.value() - 0x2000);
-        return memory_read(mirrored_address);
-    }
+    if (in_range(address, {0xE000, 0xFDFF}))
+        return memory_read(address - 0x2000);
 
     /* OAM */
-    if (address.in_range(0xFE00, 0xFE9F)) {
+    if (in_range(address, {0xFE00, 0xFE9F}))
         return memory_read(address);
-    }
 
-    if (address.in_range(0xFEA0, 0xFEFF)) {
+    if (in_range(address, {0xFEA0, 0xFEFF})) {
         log_warn("Attempting to read from unusable memory 0x%x",
                  address.value());
         return 0xFF;
     }
 
-    /* Mapped IO */
-    if (address.in_range(0xFF00, 0xFF7F)) {
-        return read_io(address);
-    }
-
-    /* Zero Page ram */
-    if (address.in_range(0xFF80, 0xFFFE)) {
-        return memory_read(address);
-    }
-
     /* Interrupt Enable register */
-    if (address == 0xFFFF) {
+    if (address == 0xFFFF)
         return cpu.interrupt_enabled.value();
-    }
 
     fatal_error("Attempted to read from unmapped memory address 0x%X",
                 address.value());
@@ -96,21 +84,14 @@ u8 MMU::read_io(const Address& address) const
 {
     switch (address.value()) {
         case 0xFF00: return input.get_input();
-
         case 0xFF01: return serial.read();
-
         case 0xFF02:
             log_unimplemented("Attempted to read serial transfer control");
             return 0xFF;
-
         case 0xFF04: return timer.get_divider();
-
         case 0xFF05: return timer.get_timer();
-
         case 0xFF06: return timer.get_timer_modulo();
-
         case 0xFF07: return timer.get_timer_control();
-
         case 0xFF0F: return cpu.interrupt_flag.value();
 
         /* TODO: Audio - Channel 1: Tone & Sweep */
@@ -171,27 +152,16 @@ u8 MMU::read_io(const Address& address) const
         case 0xFF3D:
         case 0xFF3E:
         case 0xFF3F: return memory_read(address);
-
         case 0xFF40: return video.control_byte;
-
         case 0xFF41: return video.lcd_status.value();
-
         case 0xFF42: return video.scroll_y.value();
-
         case 0xFF43: return video.scroll_x.value();
-
         case 0xFF44: return video.line.value();
-
         case 0xFF45: return video.ly_compare.value();
-
         case 0xFF47: return video.bg_palette.value();
-
         case 0xFF48: return video.sprite_palette_0.value();
-
         case 0xFF49: return video.sprite_palette_1.value();
-
         case 0xFF4A: return video.window_y.value();
-
         case 0xFF4B: return video.window_x.value();
 
         case 0xFF4D:
@@ -207,59 +177,58 @@ u8 MMU::read_io(const Address& address) const
     }
 }
 
-void MMU::write(const Address& address, const u8 byte)
+void MMU::write(Address address, const u8 byte)
 {
-    if (address.in_range(0x0000, 0x7FFF)) {
-        cartridge->write(address, byte);
+    if (in_range(address, {0x0000, 0x7FFF})) {
+        cartridge.write(address, byte);
         return;
     }
 
     /* VRAM */
-    if (address.in_range(0x8000, 0x9FFF)) {
+    if (in_range(address, {0x8000, 0x9FFF})) {
         memory_write(address, byte);
         return;
     }
 
     /* External (cartridge) RAM */
-    if (address.in_range(0xA000, 0xBFFF)) {
-        cartridge->write(address, byte);
+    if (in_range(address, {0xA000, 0xBFFF})) {
+        cartridge.write(address, byte);
         return;
     }
 
     /* Internal work RAM */
-    if (address.in_range(0xC000, 0xDFFF)) {
+    if (in_range(address, {0xC000, 0xDFFF})) {
         memory_write(address, byte);
         return;
     }
 
     /* Mirrored RAM */
-    if (address.in_range(0xE000, 0xFDFF)) {
+    if (in_range(address, {0xE000, 0xFDFF})) {
         log_warn("Attempting to write to mirrored work RAM");
-        auto mirrored_address = Address(address.value() - 0x2000);
-        memory_write(mirrored_address, byte);
+        memory_write(address - 0x2000, byte);
         return;
     }
 
     /* OAM */
-    if (address.in_range(0xFE00, 0xFE9F)) {
+    if (in_range(address, {0xFE00, 0xFE9F})) {
         memory_write(address, byte);
         return;
     }
 
-    if (address.in_range(0xFEA0, 0xFEFF)) {
+    if (in_range(address, {0xFEA0, 0xFEFF})) {
         log_warn("Attempting to write to unusable memory 0x%x - 0x%x",
                  address.value(), byte);
         return;
     }
 
     /* Mapped IO */
-    if (address.in_range(0xFF00, 0xFF7F)) {
+    if (in_range(address, {0xFF00, 0xFF7F})) {
         write_io(address, byte);
         return;
     }
 
     /* Zero Page ram */
-    if (address.in_range(0xFF80, 0xFFFE)) {
+    if (in_range(address, {0xFF80, 0xFFFE})) {
         memory_write(address, byte);
         return;
     }

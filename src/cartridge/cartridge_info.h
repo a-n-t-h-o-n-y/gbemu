@@ -2,29 +2,31 @@
 
 #include "../definitions.h"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 const int TITLE_LENGTH = 11;
 
 namespace header {
-const int entry_point = 0x100;
-const int logo = 0x104;
-const int title = 0x134;
-const int manufacturer_code = 0x13F;
-const int cgb_flag = 0x143;
-const int new_license_code = 0x144;
-const int sgb_flag = 0x146;
-const int cartridge_type = 0x147;
-const int rom_size = 0x148;
-const int ram_size = 0x149;
-const int destination_code = 0x14A;
-const int old_license_code = 0x14B;
-const int version_number = 0x14C;
-const int header_checksum = 0x14D;
-const int global_checksum = 0x14E;
-} // namespace header
+
+auto const entry_point       = 0x100;
+auto const logo              = 0x104;
+auto const title             = 0x134;
+auto const manufacturer_code = 0x13F;
+auto const cgb_flag          = 0x143;
+auto const new_license_code  = 0x144;
+auto const sgb_flag          = 0x146;
+auto const cartridge_type    = 0x147;
+auto const rom_size          = 0x148;
+auto const ram_size          = 0x149;
+auto const destination_code  = 0x14A;
+auto const old_license_code  = 0x14B;
+auto const version_number    = 0x14C;
+auto const header_checksum   = 0x14D;
+auto const global_checksum   = 0x14E;
+
+}  // namespace header
 
 enum class CartridgeType {
     ROMOnly,
@@ -70,7 +72,7 @@ enum class RAMSize {
 };
 
 extern RAMSize get_ram_size(u8 size_code);
-extern uint get_actual_ram_size(RAMSize size_code);
+extern uint get_expected_ram_size(RAMSize size_code);
 extern std::string describe(RAMSize size);
 
 enum class Destination {
@@ -82,7 +84,7 @@ extern Destination get_destination(u8 destination);
 extern std::string describe(Destination destination);
 
 class CartridgeInfo {
-public:
+   public:
     std::string title;
 
     /* Cartridge information */
@@ -100,4 +102,4 @@ public:
     bool supports_sgb;
 };
 
-extern std::unique_ptr<CartridgeInfo> get_info(std::vector<u8> rom);
+auto get_info(std::vector<u8> rom) -> CartridgeInfo;

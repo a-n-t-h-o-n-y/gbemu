@@ -24,10 +24,7 @@ inline auto get_cli_options(int argc, char* argv[]) -> CliOptions
     std::vector<std::string> flags(argv + 2, argv + argc);
 
     for (std::string& flag : flags) {
-        if (flag == "--debug") {
-            cliOptions.options.debugger = true;
-        }
-        else if (flag == "--trace") {
+        if (flag == "--trace") {
             cliOptions.options.trace = true;
         }
         else if (flag == "--silent") {
