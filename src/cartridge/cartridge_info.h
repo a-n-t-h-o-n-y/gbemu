@@ -1,30 +1,30 @@
 #pragma once
 
-#include "../definitions.h"
-
 #include <memory>
 #include <string>
 #include <vector>
 
-const int TITLE_LENGTH = 11;
+#include "../definitions.hpp"
+
+constexpr auto TITLE_LENGTH = 11;
 
 namespace header {
 
-auto const entry_point       = 0x100;
-auto const logo              = 0x104;
-auto const title             = 0x134;
-auto const manufacturer_code = 0x13F;
-auto const cgb_flag          = 0x143;
-auto const new_license_code  = 0x144;
-auto const sgb_flag          = 0x146;
-auto const cartridge_type    = 0x147;
-auto const rom_size          = 0x148;
-auto const ram_size          = 0x149;
-auto const destination_code  = 0x14A;
-auto const old_license_code  = 0x14B;
-auto const version_number    = 0x14C;
-auto const header_checksum   = 0x14D;
-auto const global_checksum   = 0x14E;
+constexpr auto entry_point       = 0x100;
+constexpr auto logo              = 0x104;
+constexpr auto title             = 0x134;
+constexpr auto manufacturer_code = 0x13F;
+constexpr auto cgb_flag          = 0x143;
+constexpr auto new_license_code  = 0x144;
+constexpr auto sgb_flag          = 0x146;
+constexpr auto cartridge_type    = 0x147;
+constexpr auto rom_size          = 0x148;
+constexpr auto ram_size          = 0x149;
+constexpr auto destination_code  = 0x14A;
+constexpr auto old_license_code  = 0x14B;
+constexpr auto version_number    = 0x14C;
+constexpr auto header_checksum   = 0x14D;
+constexpr auto global_checksum   = 0x14E;
 
 }  // namespace header
 

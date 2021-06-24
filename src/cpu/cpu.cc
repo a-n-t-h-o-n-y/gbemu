@@ -1,6 +1,6 @@
 #include "cpu.hpp"
 
-#include "../util/bitwise.h"
+#include "../util/bitwise.hpp"
 #include "../util/log.h"
 #include "opcode_cycles.h"
 #include "opcode_names.h"
@@ -17,66 +17,40 @@ Cycles CPU::tick()
 
     if (halted)
         return 1;
-
-    u16 opcode_pc     = pc.value();
-    auto const opcode = get_byte_from_pc();
-    return execute_opcode(opcode, opcode_pc);
+    return execute_opcode(get_byte_from_pc());
 }
 
-Cycles CPU::execute_opcode(const u8 opcode, u16 opcode_pc)
+Cycles CPU::execute_opcode(u8 const opcode)
 {
     branch_taken = false;
-    if (opcode == 0xCB) {
-        u8 cb_opcode = get_byte_from_pc();
-        return execute_cb_opcode(cb_opcode, opcode_pc);
-    }
-    return execute_normal_opcode(opcode, opcode_pc);
+    if (opcode != 0xCB)
+        return execute_normal_opcode(opcode);
+    else
+        return execute_cb_opcode(get_byte_from_pc());
 }
 
 void CPU::handle_interrupts()
 {
     if (interrupts_enabled) {
-        u8 fired_interrupts =
+        auto const fired_interrupts =
             interrupt_flag.value() & interrupt_enabled.value();
 
-        if (!fired_interrupts) {
+        if (fired_interrupts == 0)
             return;
-        }
 
         halted = false;
         stack_push(pc);
 
-        bool handled_interrupt = false;
-
-        handled_interrupt =
-            handle_interrupt(0, interrupts::vblank, fired_interrupts);
-        if (handled_interrupt) {
+        if (handle_interrupt(0, interrupts::vblank, fired_interrupts))
             return;
-        }
-
-        handled_interrupt =
-            handle_interrupt(1, interrupts::lcdc_status, fired_interrupts);
-        if (handled_interrupt) {
+        if (handle_interrupt(1, interrupts::lcdc_status, fired_interrupts))
             return;
-        }
-
-        handled_interrupt =
-            handle_interrupt(2, interrupts::timer, fired_interrupts);
-        if (handled_interrupt) {
+        if (handle_interrupt(2, interrupts::timer, fired_interrupts))
             return;
-        }
-
-        handled_interrupt =
-            handle_interrupt(3, interrupts::serial, fired_interrupts);
-        if (handled_interrupt) {
+        if (handle_interrupt(3, interrupts::serial, fired_interrupts))
             return;
-        }
-
-        handled_interrupt =
-            handle_interrupt(4, interrupts::joypad, fired_interrupts);
-        if (handled_interrupt) {
+        if (handle_interrupt(4, interrupts::joypad, fired_interrupts))
             return;
-        }
     }
 }
 
@@ -86,9 +60,8 @@ bool CPU::handle_interrupt(u8 interrupt_bit,
 {
     using bitwise::check_bit;
 
-    if (!check_bit(fired_interrupts, interrupt_bit)) {
+    if (!check_bit(fired_interrupts, interrupt_bit))
         return false;
-    }
 
     interrupt_flag.set_bit_to(interrupt_bit, false);
     pc.set(interrupt_vector);
@@ -98,22 +71,21 @@ bool CPU::handle_interrupt(u8 interrupt_bit,
 
 u8 CPU::get_byte_from_pc()
 {
-    u8 byte = mmu.read(to_address(pc));
+    auto const byte = mmu.read(to_address(pc));
     pc.increment();
-
     return byte;
 }
 
 s8 CPU::get_signed_byte_from_pc()
 {
-    u8 byte = get_byte_from_pc();
+    auto const byte = get_byte_from_pc();
     return static_cast<s8>(byte);
 }
 
 u16 CPU::get_word_from_pc()
 {
-    u8 low_byte  = get_byte_from_pc();
-    u8 high_byte = get_byte_from_pc();
+    auto const low_byte  = get_byte_from_pc();
+    auto const high_byte = get_byte_from_pc();
 
     return compose_bytes(high_byte, low_byte);
 }
@@ -178,11 +150,8 @@ void CPU::stack_pop(RegisterPair& reg)
     reg.set(value);
 }
 
-Cycles CPU::execute_normal_opcode(const u8 opcode, u16 opcode_pc)
+Cycles CPU::execute_normal_opcode(u8 const opcode)
 {
-    log_trace("0x%04X: %s (0x%x)", opcode_pc, opcode_names[opcode].c_str(),
-              opcode);
-
     switch (opcode) {
         case 0x00: opcode_00(); break;
         case 0x01: opcode_01(); break;
@@ -446,11 +415,8 @@ Cycles CPU::execute_normal_opcode(const u8 opcode, u16 opcode_pc)
                          : opcode_cycles_branched[opcode];
 }
 
-Cycles CPU::execute_cb_opcode(const u8 opcode, u16 opcode_pc)
+Cycles CPU::execute_cb_opcode(u8 const opcode)
 {
-    log_trace("0x%04X: %s (CB 0x%x)", opcode_pc,
-              opcode_cb_names[opcode].c_str(), opcode);
-
     switch (opcode) {
         case 0x00: opcode_CB_00(); break;
         case 0x01: opcode_CB_01(); break;

@@ -1,38 +1,32 @@
 #ifndef GBEMU_CPU_CPU_HPP
 #define GBEMU_CPU_CPU_HPP
-
 #include "../address.hpp"
 #include "../mmu.hpp"
-#include "../options.h"
+#include "../options.hpp"
 #include "../register.hpp"
 
-enum class Condition {
-    NZ,
-    Z,
-    NC,
-    C,
-};
+enum class Condition { NZ, Z, NC, C };
 
 namespace rst {
 
-u16 const rst1 = 0x00;
-u16 const rst2 = 0x08;
-u16 const rst3 = 0x10;
-u16 const rst4 = 0x18;
-u16 const rst5 = 0x20;
-u16 const rst6 = 0x28;
-u16 const rst7 = 0x30;
-u16 const rst8 = 0x38;
+constexpr auto rst1 = u16{0x00};
+constexpr auto rst2 = u16{0x08};
+constexpr auto rst3 = u16{0x10};
+constexpr auto rst4 = u16{0x18};
+constexpr auto rst5 = u16{0x20};
+constexpr auto rst6 = u16{0x28};
+constexpr auto rst7 = u16{0x30};
+constexpr auto rst8 = u16{0x38};
 
 }  // namespace rst
 
 namespace interrupts {
 
-u16 const vblank      = 0x40;
-u16 const lcdc_status = 0x48;
-u16 const timer       = 0x50;
-u16 const serial      = 0x58;
-u16 const joypad      = 0x60;
+constexpr auto vblank      = u16{0x40};
+constexpr auto lcdc_status = u16{0x48};
+constexpr auto timer       = u16{0x50};
+constexpr auto serial      = u16{0x58};
+constexpr auto joypad      = u16{0x60};
 
 }  // namespace interrupts
 
@@ -41,13 +35,13 @@ class CPU {
     CPU(MMU& inMMU, Options& inOptions);
 
    public:
-    auto tick() -> Cycles;
+    [[nodiscard]] auto tick() -> Cycles;
 
-    auto execute_opcode(u8 opcode, u16 opcode_pc) -> Cycles;
+    [[nodiscard]] auto execute_opcode(u8 opcode) -> Cycles;
 
-    auto execute_normal_opcode(u8 opcode, u16 opcode_pc) -> Cycles;
+    [[nodiscard]] auto execute_normal_opcode(u8 opcode) -> Cycles;
 
-    auto execute_cb_opcode(u8 opcode, u16 opcode_pc) -> Cycles;
+    [[nodiscard]] auto execute_cb_opcode(u8 opcode) -> Cycles;
 
    public:
     FlagRegister interrupt_flag;
@@ -56,9 +50,9 @@ class CPU {
    private:
     void handle_interrupts();
 
-    auto handle_interrupt(u8 interrupt_bit,
-                          u16 interrupt_vector,
-                          u8 fired_interrupts) -> bool;
+    [[nodiscard]] auto handle_interrupt(u8 interrupt_bit,
+                                        u16 interrupt_vector,
+                                        u8 fired_interrupts) -> bool;
 
    private:
     MMU& mmu;
@@ -95,7 +89,7 @@ class CPU {
     /* Note: Not const because this also sets the 'branch_taken' member
      * variable if a branch is taken. This allows the correct cycle
      * count to be used */
-    auto is_condition(Condition condition) -> bool;
+    [[nodiscard]] auto is_condition(Condition condition) -> bool;
 
     /* Program counter */
     WordRegister pc;
@@ -103,9 +97,9 @@ class CPU {
     /* Stack pointer */
     WordRegister sp;
 
-    auto get_byte_from_pc() -> u8;
-    auto get_signed_byte_from_pc() -> s8;
-    auto get_word_from_pc() -> u16;
+    [[nodiscard]] auto get_byte_from_pc() -> u8;
+    [[nodiscard]] auto get_signed_byte_from_pc() -> s8;
+    [[nodiscard]] auto get_word_from_pc() -> u16;
 
     void stack_push(WordRegister reg);
     void stack_push(RegisterPair reg);
@@ -268,28 +262,28 @@ class CPU {
     void opcode_reti();
 
     /* RL */
-    auto _opcode_rl(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_rl(u8 value) -> u8;
 
     void opcode_rla();
     void opcode_rl(FlagRegister& reg);
     void opcode_rl(Address addr);
 
     /* RLC */
-    auto _opcode_rlc(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_rlc(u8 value) -> u8;
 
     void opcode_rlca();
     void opcode_rlc(FlagRegister& reg);
     void opcode_rlc(Address addr);
 
     /* RR */
-    auto _opcode_rr(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_rr(u8 value) -> u8;
 
     void opcode_rra();
     void opcode_rr(FlagRegister& reg);
     void opcode_rr(Address addr);
 
     /* RRC */
-    u8 _opcode_rrc(u8 value);
+    [[nodiscard]] auto _opcode_rrc(u8 value) -> u8;
 
     void opcode_rrca();
     void opcode_rrc(FlagRegister& reg);
@@ -313,19 +307,19 @@ class CPU {
     void opcode_set(u8 bit, Address addr);
 
     /* SLA */
-    auto _opcode_sla(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_sla(u8 value) -> u8;
 
     void opcode_sla(FlagRegister& reg);
     void opcode_sla(Address addr);
 
     /* SRA */
-    auto _opcode_sra(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_sra(u8 value) -> u8;
 
     void opcode_sra(FlagRegister& reg);
     void opcode_sra(Address addr);
 
     /* SRL */
-    auto _opcode_srl(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_srl(u8 value) -> u8;
 
     void opcode_srl(FlagRegister& reg);
     void opcode_srl(Address addr);
@@ -341,7 +335,7 @@ class CPU {
     void opcode_sub(Address addr);
 
     /* SWAP */
-    auto _opcode_swap(u8 value) -> u8;
+    [[nodiscard]] auto _opcode_swap(u8 value) -> u8;
 
     void opcode_swap(FlagRegister& reg);
     void opcode_swap(Address addr);

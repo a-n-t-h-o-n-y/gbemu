@@ -1,7 +1,11 @@
-#pragma once
-/* clang-format off */
+#ifndef GBEMU_CPU_OPCODE_CYCLES_HPP
+#define GBEMU_CPU_OPCODE_CYCLES_HPP
+#include <array>
 
-const u8 opcode_cycles[256] = {
+#include "../definitions.hpp"
+
+// clang-format off
+inline constexpr auto opcode_cycles = std::array<u8, 256> {
     1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1,
     1, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1, 2, 1,
     2, 3, 2, 2, 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 2, 1,
@@ -20,7 +24,7 @@ const u8 opcode_cycles[256] = {
     3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4
 };
 
-const u8 opcode_cycles_branched[256] = {
+inline constexpr auto opcode_cycles_branched = std::array<u8, 256> {
     1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1,
     1, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1, 2, 1,
     3, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1, 2, 1,
@@ -39,7 +43,7 @@ const u8 opcode_cycles_branched[256] = {
     3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4
 };
 
-const u8 opcode_cycles_cb[256] = {
+inline constexpr auto opcode_cycles_cb = std::array<u8, 256> {
     2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2,
     2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2,
     2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2,
@@ -57,3 +61,6 @@ const u8 opcode_cycles_cb[256] = {
     2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2,
     2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2
 };
+
+// clang-format on
+#endif  // GBEMU_CPU_OPCODE_CYCLES_HPP

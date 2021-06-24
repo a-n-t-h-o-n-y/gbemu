@@ -1,23 +1,27 @@
-#include "video.h"
+#include "video.hpp"
 
 #include "../cpu/cpu.hpp"
-#include "color.h"
-
-#include "../util/bitwise.h"
+#include "../util/bitwise.hpp"
 #include "../util/log.h"
+#include "color.hpp"
+
+namespace {
+
+constexpr uint CLOCKS_PER_HBLANK        = 204; /* Mode 0 */
+constexpr uint CLOCKS_PER_SCANLINE_OAM  = 80;  /* Mode 2 */
+constexpr uint CLOCKS_PER_SCANLINE_VRAM = 172; /* Mode 3 */
+constexpr uint CLOCKS_PER_SCANLINE =
+    (CLOCKS_PER_SCANLINE_OAM + CLOCKS_PER_SCANLINE_VRAM + CLOCKS_PER_HBLANK);
+
+}  // namespace
 
 using bitwise::check_bit;
 
-Video::Video(CPU& inCPU, MMU& inMMU, Options&)
-    : cpu(inCPU),
-      mmu(inMMU),
-      buffer(GAMEBOY_WIDTH, GAMEBOY_HEIGHT),
-      background_map(BG_MAP_SIZE, BG_MAP_SIZE)
-{}
+Video::Video(CPU& inCPU, MMU& inMMU, Options&) : cpu{inCPU}, mmu{inMMU} {}
 
 void Video::tick(Cycles cycles)
 {
-    cycle_counter += cycles.cycles;
+    cycle_counter += cycles;
 
     switch (current_mode) {
         case VideoMode::ACCESS_OAM:
@@ -33,19 +37,17 @@ void Video::tick(Cycles cycles)
                 cycle_counter = cycle_counter % CLOCKS_PER_SCANLINE_VRAM;
                 current_mode  = VideoMode::HBLANK;
 
-                bool hblank_interrupt =
+                bool const hblank_interrupt =
                     bitwise::check_bit(lcd_status.value(), 3);
 
-                if (hblank_interrupt) {
+                if (hblank_interrupt)
                     cpu.interrupt_flag.set_bit_to(1, true);
-                }
 
-                bool ly_coincidence_interrupt =
+                bool const ly_coincidence_interrupt =
                     bitwise::check_bit(lcd_status.value(), 6);
-                bool ly_coincidence = ly_compare.value() == line.value();
-                if (ly_coincidence_interrupt && ly_coincidence) {
+                bool const ly_coincidence = ly_compare.value() == line.value();
+                if (ly_coincidence_interrupt && ly_coincidence)
                     cpu.interrupt_flag.set_bit_to(1, true);
-                }
                 lcd_status.set_bit_to(2, ly_coincidence);
 
                 lcd_status.set_bit_to(1, 0);
@@ -83,7 +85,6 @@ void Video::tick(Cycles cycles)
                 if (line == FlagRegister{154}) {
                     write_sprites();
                     draw();
-                    buffer.reset();
                     line.reset();
                     current_mode = VideoMode::ACCESS_OAM;
                     lcd_status.set_bit_to(1, 1);
@@ -94,39 +95,58 @@ void Video::tick(Cycles cycles)
     }
 }
 
-bool Video::display_enabled() const { return check_bit(control_byte, 7); }
-bool Video::window_tile_map() const { return check_bit(control_byte, 6); }
-bool Video::window_enabled() const { return check_bit(control_byte, 5); }
-bool Video::bg_window_tile_data() const { return check_bit(control_byte, 4); }
-bool Video::bg_tile_map_display() const { return check_bit(control_byte, 3); }
-bool Video::sprite_size() const { return check_bit(control_byte, 2); }
-bool Video::sprites_enabled() const { return check_bit(control_byte, 1); }
-bool Video::bg_enabled() const { return check_bit(control_byte, 0); }
+auto Video::display_enabled() const -> bool
+{
+    return check_bit(control_byte, 7);
+}
+
+auto Video::window_tile_map() const -> bool
+{
+    return check_bit(control_byte, 6);
+}
+
+auto Video::window_enabled() const -> bool
+{
+    return check_bit(control_byte, 5);
+}
+
+auto Video::bg_window_tile_data() const -> bool
+{
+    return check_bit(control_byte, 4);
+}
+
+auto Video::bg_tile_map_display() const -> bool
+{
+    return check_bit(control_byte, 3);
+}
+
+auto Video::sprite_size() const -> bool { return check_bit(control_byte, 2); }
+
+auto Video::sprites_enabled() const -> bool
+{
+    return check_bit(control_byte, 1);
+}
+
+auto Video::bg_enabled() const -> bool { return check_bit(control_byte, 0); }
 
 void Video::write_scanline(u8 current_line)
 {
-    if (!display_enabled()) {
+    if (!display_enabled())
         return;
-    }
 
-    if (bg_enabled() && !debug_disable_background) {
+    if (bg_enabled() && !debug_disable_background)
         draw_bg_line(current_line);
-    }
 
-    if (window_enabled() && !debug_disable_window) {
+    if (window_enabled() && !debug_disable_window)
         draw_window_line(current_line);
-    }
 }
 
 void Video::write_sprites()
 {
-    if (!sprites_enabled() || debug_disable_sprites) {
+    if (!sprites_enabled() || debug_disable_sprites)
         return;
-    }
-
-    for (uint sprite_n = 0; sprite_n < 40; sprite_n++) {
+    for (uint sprite_n = 0; sprite_n < 40; ++sprite_n)
         draw_sprite(sprite_n);
-    }
 }
 
 void Video::draw_bg_line(uint current_line)
@@ -224,7 +244,7 @@ void Video::draw_window_line(uint current_line)
     }
     // if (!is_on_screen_y(scrolled_y)) { return; }
 
-    for (uint screen_x = 0; screen_x < GAMEBOY_WIDTH; screen_x++) {
+    for (uint screen_x = 0; screen_x < GAMEBOY_WIDTH; ++screen_x) {
         /* Work out the position of the pixel in the framebuffer */
         uint scrolled_x = screen_x + window_x.value() - 7;
 
@@ -275,76 +295,65 @@ void Video::draw_window_line(uint current_line)
 
 void Video::draw_sprite(const uint sprite_n)
 {
-    using bitwise::check_bit;
-
     /* Each sprite is represented by 4 bytes, or 8 bytes in 8x16 mode */
-    Address offset_in_oam = sprite_n * SPRITE_BYTES;
-
-    Address oam_start = 0xFE00 + offset_in_oam.value();
-    u8 sprite_y       = mmu.read(oam_start);
-    u8 sprite_x       = mmu.read(oam_start + 1);
+    auto const offset_in_oam = Address(sprite_n * SPRITE_BYTES);
+    auto const oam_start     = Address(0xFE00 + offset_in_oam.value());
+    auto const sprite_y      = mmu.read(oam_start);
+    auto const sprite_x      = mmu.read(oam_start + 1);
 
     /* If the sprite would be drawn offscreen, don't draw it */
-    if (sprite_y == 0 || sprite_y >= 160) {
+    if (sprite_y == 0 || sprite_y >= 160)
         return;
-    }
-    if (sprite_x == 0 || sprite_x >= 168) {
+    if (sprite_x == 0 || sprite_x >= 168)
         return;
-    }
 
-    uint sprite_size_multiplier = sprite_size() ? 2 : 1;
-
-    /* Sprites are always taken from the first tileset */
-    Address tile_set_location = TILE_SET_ZERO_ADDRESS;
-
-    u8 pattern_n    = mmu.read(oam_start + 2);
-    u8 sprite_attrs = mmu.read(oam_start + 3);
+    auto const pattern_n    = mmu.read(oam_start + 2);
+    auto const sprite_attrs = mmu.read(oam_start + 3);
 
     /* Bits 0-3 are used only for CGB */
-    bool use_palette_1 = check_bit(sprite_attrs, 4);
-    bool flip_x        = check_bit(sprite_attrs, 5);
-    bool flip_y        = check_bit(sprite_attrs, 6);
-    bool obj_behind_bg = check_bit(sprite_attrs, 7);
+    using bitwise::check_bit;
+    auto const use_palette_1 = check_bit(sprite_attrs, 4);
+    auto const flip_x        = check_bit(sprite_attrs, 5);
+    auto const flip_y        = check_bit(sprite_attrs, 6);
+    auto const obj_behind_bg = check_bit(sprite_attrs, 7);
 
-    Palette palette = use_palette_1 ? load_palette(sprite_palette_1)
-                                    : load_palette(sprite_palette_0);
+    auto const palette = use_palette_1 ? load_palette(sprite_palette_1)
+                                       : load_palette(sprite_palette_0);
 
-    uint tile_offset = pattern_n * TILE_BYTES;
+    /* Sprites are always taken from the first tileset */
+    auto const tile_offset     = (uint)(pattern_n * TILE_BYTES);
+    auto const pattern_address = TILE_SET_ZERO_ADDRESS + tile_offset;
 
-    Address pattern_address = tile_set_location + tile_offset;
+    auto const sprite_size_multiplier = (uint)(sprite_size() ? 2 : 1);
+    auto const tile    = Tile{pattern_address, mmu, sprite_size_multiplier};
+    auto const start_y = sprite_y - 16;
+    auto const start_x = sprite_x - 8;
 
-    Tile tile(pattern_address, mmu, sprite_size_multiplier);
-    int start_y = sprite_y - 16;
-    int start_x = sprite_x - 8;
-
-    for (uint y = 0; y < TILE_HEIGHT_PX * sprite_size_multiplier; y++) {
-        for (uint x = 0; x < TILE_WIDTH_PX; x++) {
-            uint maybe_flipped_y =
+    for (uint y = 0; y < TILE_HEIGHT_PX * sprite_size_multiplier; ++y) {
+        for (uint x = 0; x < TILE_WIDTH_PX; ++x) {
+            auto const maybe_flipped_y =
                 !flip_y ? y : (TILE_HEIGHT_PX * sprite_size_multiplier) - y - 1;
-            uint maybe_flipped_x = !flip_x ? x : TILE_WIDTH_PX - x - 1;
+            auto const maybe_flipped_x = !flip_x ? x : TILE_WIDTH_PX - x - 1;
 
             GBColor gb_color = tile.get_pixel(maybe_flipped_x, maybe_flipped_y);
 
             // Color 0 is transparent
-            if (gb_color == GBColor::Color0) {
+            if (gb_color == GBColor::Color0)
                 continue;
-            }
 
-            int screen_x = start_x + x;
-            int screen_y = start_y + y;
+            auto const screen_x = start_x + x;
+            auto const screen_y = start_y + y;
 
-            if (!is_on_screen(screen_x, screen_y)) {
+            if (!is_on_screen(screen_x, screen_y))
                 continue;
-            }
 
-            auto existing_pixel = buffer.get_pixel(screen_x, screen_y);
+            auto const existing_pixel = buffer.get_pixel(screen_x, screen_y);
 
             // FIXME: We need to see if the color we're writing over is
             // logically Color0, rather than looking at the color after
             // the current palette has been applied
-            if (obj_behind_bg && existing_pixel != Color::White) {
+            if (obj_behind_bg && existing_pixel != Color::White)
                 continue;
-            }
 
             Color screen_color = get_color_from_palette(gb_color, palette);
 
@@ -353,48 +362,51 @@ void Video::draw_sprite(const uint sprite_n)
     }
 }
 
-GBColor Video::get_pixel_from_line(u8 byte1, u8 byte2, u8 pixel_index) const
+auto Video::get_pixel_from_line(u8 byte1, u8 byte2, u8 pixel_index) const
+    -> GBColor
 {
     using bitwise::bit_value;
 
-    u8 color_u8 = static_cast<u8>((bit_value(byte2, 7 - pixel_index) << 1) |
-                                  bit_value(byte1, 7 - pixel_index));
+    auto const color_u8 =
+        static_cast<u8>((bit_value(byte2, 7 - pixel_index) << 1) |
+                        bit_value(byte1, 7 - pixel_index));
     return get_color(color_u8);
 }
 
-bool Video::is_on_screen_x(u8 x) const { return x < GAMEBOY_WIDTH; }
+auto Video::is_on_screen_x(u8 x) const -> bool { return x < GAMEBOY_WIDTH; }
 
-bool Video::is_on_screen_y(u8 y) const { return y < GAMEBOY_HEIGHT; }
+auto Video::is_on_screen_y(u8 y) const -> bool { return y < GAMEBOY_HEIGHT; }
 
-bool Video::is_on_screen(u8 x, u8 y) const
+auto Video::is_on_screen(u8 x, u8 y) const -> bool
 {
     return is_on_screen_x(x) && is_on_screen_y(y);
 }
 
-Palette Video::load_palette(FlagRegister palette_register) const
+auto Video::load_palette(FlagRegister palette_register) const -> Palette
 {
     using bitwise::bit_value;
     using bitwise::compose_bits;
 
     /* TODO: Reduce duplication */
-    u8 color0 = compose_bits(bit_value(palette_register.value(), 1),
-                             bit_value(palette_register.value(), 0));
-    u8 color1 = compose_bits(bit_value(palette_register.value(), 3),
-                             bit_value(palette_register.value(), 2));
-    u8 color2 = compose_bits(bit_value(palette_register.value(), 5),
-                             bit_value(palette_register.value(), 4));
-    u8 color3 = compose_bits(bit_value(palette_register.value(), 7),
-                             bit_value(palette_register.value(), 6));
+    auto const color0 = compose_bits(bit_value(palette_register.value(), 1),
+                                     bit_value(palette_register.value(), 0));
+    auto const color1 = compose_bits(bit_value(palette_register.value(), 3),
+                                     bit_value(palette_register.value(), 2));
+    auto const color2 = compose_bits(bit_value(palette_register.value(), 5),
+                                     bit_value(palette_register.value(), 4));
+    auto const color3 = compose_bits(bit_value(palette_register.value(), 7),
+                                     bit_value(palette_register.value(), 6));
 
-    Color real_color_0 = get_real_color(color0);
-    Color real_color_1 = get_real_color(color1);
-    Color real_color_2 = get_real_color(color2);
-    Color real_color_3 = get_real_color(color3);
+    auto const real_color_0 = get_real_color(color0);
+    auto const real_color_1 = get_real_color(color1);
+    auto const real_color_2 = get_real_color(color2);
+    auto const real_color_3 = get_real_color(color3);
 
     return {real_color_0, real_color_1, real_color_2, real_color_3};
 }
 
-Color Video::get_color_from_palette(GBColor color, const Palette& palette)
+auto Video::get_color_from_palette(GBColor color, const Palette& palette)
+    -> Color
 {
     switch (color) {
         case GBColor::Color0: return palette.color0;
@@ -404,7 +416,7 @@ Color Video::get_color_from_palette(GBColor color, const Palette& palette)
     }
 }
 
-Color Video::get_real_color(u8 pixel_value) const
+auto Video::get_real_color(u8 pixel_value) const -> Color
 {
     switch (pixel_value) {
         case 0: return Color::White;
@@ -415,7 +427,7 @@ Color Video::get_real_color(u8 pixel_value) const
     }
 }
 
-void Video::register_vblank_callback(const vblank_callback_t& _vblank_callback)
+void Video::register_vblank_callback(const VBlank_callback_t& _vblank_callback)
 {
     vblank_callback = _vblank_callback;
 }

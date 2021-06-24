@@ -21,22 +21,22 @@ class MMU {
         Timer& timer);
 
    public:
-    auto read(Address address) const -> u8;
+    [[nodiscard]] auto read(Address address) const -> u8;
 
     void write(Address address, u8 byte);
 
    private:
-    bool boot_rom_active() const;
+    [[nodiscard]] auto boot_rom_active() const -> bool;
 
-    u8 read_io(const Address& address) const;
+    [[nodiscard]] auto read_io(Address address) const -> u8;
 
-    void write_io(const Address& address, u8 byte);
+    void write_io(Address address, u8 byte);
 
-    u8 memory_read(const Address& address) const;
+    [[nodiscard]] auto memory_read(Address address) const -> u8;
 
-    void memory_write(const Address& address, u8 byte);
+    void memory_write(Address address, u8 byte);
 
-    void dma_transfer(const u8 byte);
+    void dma_transfer(u8 byte);
 
    private:
     Cartridge& cartridge;

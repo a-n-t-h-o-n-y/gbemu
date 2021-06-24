@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "../address.hpp"
-#include "../util/files.h"
+#include "../util/files.hpp"
 #include "../util/log.h"
 
 Cartridge::Cartridge(std::vector<u8> rom_data,
@@ -77,10 +77,10 @@ MBC1::MBC1(std::vector<u8> rom_data,
 
 void MBC1::write(Address address, u8 value)
 {
-    if (in_range(address, {0x0000, 0x1FFF}))
+    if (in_range<0x0000, 0x1FFF>(address))
         ram_enabled = true;
 
-    if (in_range(address, {0x2000, 0x3FFF})) {
+    if (in_range<0x2000, 0x3FFF>(address)) {
         if (value == 0x0)
             rom_bank.set(0x1);
         else if (value == 0x20) {
@@ -100,16 +100,16 @@ void MBC1::write(Address address, u8 value)
         rom_bank.set(rom_bank_bits);
     }
 
-    if (in_range(address, {0x4000, 0x5FFF})) {
+    if (in_range<0x4000, 0x5FFF>(address)) {
         log_unimplemented(
             "Unimplemented: Setting upper bits of ROM bank number");
     }
 
-    if (in_range(address, {0x6000, 0x7FFF})) {
+    if (in_range<0x6000, 0x7FFF>(address)) {
         log_unimplemented("Unimplemented: Selecting ROM/RAM Mode");
     }
 
-    if (in_range(address, {0xA000, 0xBFFF})) {
+    if (in_range<0xA000, 0xBFFF>(address)) {
         if (!ram_enabled)
             return;
 
@@ -119,18 +119,18 @@ void MBC1::write(Address address, u8 value)
     }
 }
 
-u8 MBC1::read(Address address) const
+auto MBC1::read(Address address) const -> u8
 {
-    if (in_range(address, {0x0000, 0x3FFF}))
+    if (in_range<0x0000, 0x3FFF>(address))
         return rom.at(address.value());
-    else if (in_range(address, {0x4000, 0x7FFF})) {
+    else if (in_range<0x4000, 0x7FFF>(address)) {
         u16 address_into_bank = address.value() - 0x4000;
         uint bank_offset      = 0x4000 * rom_bank.value();
 
         uint address_in_rom = bank_offset + address_into_bank;
         return rom.at(address_in_rom);
     }
-    else if (in_range(address, {0xA000, 0xBFFF})) {
+    else if (in_range<0xA000, 0xBFFF>(address)) {
         auto offset_into_ram = 0x2000 * ram_bank.value();
         auto address_in_ram  = (address - 0xA000) + offset_into_ram;
         return ram.at(address_in_ram.value());
@@ -150,21 +150,21 @@ MBC3::MBC3(std::vector<u8> rom_data,
 
 void MBC3::write(Address address, u8 value)
 {
-    if (in_range(address, {0x0000, 0x1FFF})) {
+    if (in_range<0x0000, 0x1FFF>(address)) {
         if (value == 0x0A)
             ram_enabled = true;
         else if (value == 0x0)
             ram_enabled = false;
     }
 
-    if (in_range(address, {0x2000, 0x3FFF})) {
+    if (in_range<0x2000, 0x3FFF>(address)) {
         if (value == 0x0)
             rom_bank.set(0x1);
         u16 rom_bank_bits = value & 0x7F;
         rom_bank.set(rom_bank_bits);
     }
 
-    if (in_range(address, {0x4000, 0x5FFF})) {
+    if (in_range<0x4000, 0x5FFF>(address)) {
         if (value <= 0x03) {
             ram_over_rtc = true;
             ram_bank.set(value);
@@ -175,11 +175,11 @@ void MBC3::write(Address address, u8 value)
         }
     }
 
-    if (in_range(address, {0x6000, 0x7FFF})) {
+    if (in_range<0x6000, 0x7FFF>(address)) {
         log_unimplemented("Unimplemented: Latch clock data");
     }
 
-    if (in_range(address, {0xA000, 0xBFFF})) {
+    if (in_range<0xA000, 0xBFFF>(address)) {
         if (!ram_enabled)
             return;
         if (ram_over_rtc) {
@@ -192,16 +192,16 @@ void MBC3::write(Address address, u8 value)
 
 u8 MBC3::read(Address address) const
 {
-    if (in_range(address, {0x0000, 0x3FFF}))
+    if (in_range<0x0000, 0x3FFF>(address))
         return rom.at(address.value());
-    else if (in_range(address, {0x4000, 0x7FFF})) {
+    else if (in_range<0x4000, 0x7FFF>(address)) {
         u16 address_into_bank = address.value() - 0x4000;
         uint bank_offset      = 0x4000 * rom_bank.value();
 
         uint address_in_rom = bank_offset + address_into_bank;
         return rom.at(address_in_rom);
     }
-    else if (in_range(address, {0xA000, 0xBFFF})) {
+    else if (in_range<0xA000, 0xBFFF>(address)) {
         auto const offset_into_ram = 0x2000 * ram_bank.value();
         auto const address_in_ram  = (address - 0xA000) + offset_into_ram;
         return ram.at(address_in_ram.value());

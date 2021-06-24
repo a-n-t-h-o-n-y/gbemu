@@ -1,5 +1,5 @@
 #include "cpu.hpp"
-/* clang-format off */
+// clang-format off
 
 /**
  * This section contains functions which map to actual opcodes which are executed
@@ -524,3 +524,5 @@ void CPU::opcode_CB_FC() { opcode_set(7, h); }
 void CPU::opcode_CB_FD() { opcode_set(7, l); }
 void CPU::opcode_CB_FE() { opcode_set(7, to_address(hl)); }
 void CPU::opcode_CB_FF() { opcode_set(7, a); }
+
+// clang-format on

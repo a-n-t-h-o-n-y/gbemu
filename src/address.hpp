@@ -1,6 +1,6 @@
 #ifndef GBEMU_ADDRESS_HPP
 #define GBEMU_ADDRESS_HPP
-#include "definitions.h"
+#include "definitions.hpp"
 #include "register.hpp"
 
 class Address {
@@ -24,17 +24,11 @@ class Address {
     return {from.value()};
 }
 
-struct Address_range {
-    Address low;
-    Address high;
-};
-
 /// Return true if \p subject is within the given inclusive range.
-[[nodiscard]] constexpr auto in_range(Address subject, Address_range range)
-    -> bool
+template <u16 low, u16 high>
+[[nodiscard]] constexpr auto in_range(Address subject) -> bool
 {
-    return range.low.value() <= subject.value() &&
-           subject.value() <= range.high.value();
+    return low <= subject.value() && subject.value() <= high;
 }
 
 [[nodiscard]] constexpr auto operator==(Address lhs, Address rhs) -> bool

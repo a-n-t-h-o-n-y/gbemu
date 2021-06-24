@@ -16,7 +16,6 @@ add_library(gbemu-core
     src/util/log.cc
     src/util/string_utils.cc
     src/video/color.cc
-    src/video/framebuffer.cc
     src/video/tile.cc
     src/video/video.cc
 )

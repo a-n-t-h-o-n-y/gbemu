@@ -193,9 +193,8 @@ std::string get_title(std::vector<u8>& rom)
 {
     char name[TITLE_LENGTH] = {0};
 
-    for (u8 i = 0; i < TITLE_LENGTH; i++) {
+    for (u8 i = 0; i < TITLE_LENGTH; ++i)
         name[i] = static_cast<char>(rom[header::title + i]);
-    }
 
     return std::string(name);
 }

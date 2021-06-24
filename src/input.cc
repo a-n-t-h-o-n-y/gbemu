@@ -1,17 +1,14 @@
-#include "input.h"
+#include "input.hpp"
 
-#include "util/bitwise.h"
+#include "util/bitwise.hpp"
 
-void Input::button_pressed(GbButton button) {
-    set_button(button, true);
-}
+void Input::button_pressed(GbButton button) { set_button(button, true); }
 
-void Input::button_released(GbButton button) {
-    set_button(button, false);
-}
+void Input::button_released(GbButton button) { set_button(button, false); }
 
-void Input::set_button(GbButton button, bool set) {
-    switch(button) {
+void Input::set_button(GbButton button, bool set)
+{
+    switch (button) {
         case GbButton::Up: up = set; break;
         case GbButton::Down: down = set; break;
         case GbButton::Left: left = set; break;
@@ -23,14 +20,16 @@ void Input::set_button(GbButton button, bool set) {
     }
 }
 
-void Input::write(u8 set) {
+void Input::write(u8 set)
+{
     using bitwise::check_bit;
 
     direction_switch = !check_bit(set, 4);
-    button_switch = !check_bit(set, 5);
+    button_switch    = !check_bit(set, 5);
 }
 
-u8 Input::get_input() const {
+auto Input::get_input() const -> u8
+{
     using bitwise::set_bit_to;
 
     u8 buttons = 0b1111;

@@ -1,23 +1,24 @@
-#pragma once
+#ifndef GBEMU_GAMEBOY_HPP
+#define GBEMU_GAMEBOY_HPP
 #include <functional>
 #include <utility>
 
 #include "cpu/cpu.hpp"
-#include "input.h"
-#include "options.h"
-#include "serial.h"
-#include "timer.h"
+#include "input.hpp"
+#include "options.hpp"
+#include "serial.hpp"
+#include "timer.hpp"
 #include "util/log.h"
-#include "video/video.h"
+#include "video/video.hpp"
 
-typedef std::function<bool(void)> should_close_callback_t;
+using Should_close_callback_t = std::function<bool(void)>;
 
 class Gameboy {
    public:
     Gameboy(Cartridge& cart, Options& options);
 
-    void run(const should_close_callback_t& _should_close_callback,
-             const vblank_callback_t& _vblank_callback);
+    void run(const Should_close_callback_t& _should_close_callback,
+             const VBlank_callback_t& _vblank_callback);
 
     void button_pressed(GbButton button);
     void button_released(GbButton button);
@@ -45,5 +46,7 @@ class Gameboy {
     MMU mmu;
     Timer timer;
 
-    should_close_callback_t should_close_callback;
+    Should_close_callback_t should_close_callback;
 };
+
+#endif  // GBEMU_GAMEBOY_HPP

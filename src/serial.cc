@@ -1,21 +1,18 @@
-#include "serial.h"
+#include "serial.hpp"
 
-#include "util/bitwise.h"
+#include "util/bitwise.hpp"
 #include "util/log.h"
 
 #include <cstdio>
 
-u8 Serial::read() const {
-    return data;
-}
+auto Serial::read() const -> u8 { return data; }
 
-void Serial::write(const u8 byte) {
-    data = byte;
-}
+void Serial::write(const u8 byte) { data = byte; }
 
-void Serial::write_control(const u8 byte) {
+void Serial::write_control(const u8 byte)
+{
     if (bitwise::check_bit(byte, 7) && options.print_serial) {
-        printf("%c", data);
-        fflush(stdout);
+        std::printf("%c", data);
+        std::fflush(stdout);
     }
 }

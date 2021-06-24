@@ -1,9 +1,9 @@
 #include "cpu.hpp"
 
-#include "../util/bitwise.h"
-#include "../util/log.h"
-
 #include <cstdlib>
+
+#include "../util/bitwise.hpp"
+#include "../util/log.h"
 
 using bitwise::check_bit;
 using bitwise::clear_bit;
@@ -140,13 +140,10 @@ void CPU::opcode_call()
 
 void CPU::opcode_call(Condition condition)
 {
-    if (is_condition(condition)) {
+    if (is_condition(condition))
         opcode_call();
-    }
-    else {
-        /* Consume unused word argument */
-        get_word_from_pc();
-    }
+    else
+        (void)get_word_from_pc();  // Consume unused word argument
 }
 
 /* CCF */
@@ -158,10 +155,10 @@ void CPU::opcode_ccf()
 }
 
 /* CP */
-void CPU::_opcode_cp(const u8 value)
+void CPU::_opcode_cp(u8 const value)
 {
-    u8 reg    = a.value();
-    u8 result = static_cast<u8>(reg - value);
+    auto const reg    = a.value();
+    auto const result = static_cast<u8>(reg - value);
 
     set_flag_zero(result == 0);
     set_flag_subtract(true);
@@ -279,7 +276,7 @@ void CPU::opcode_jp(Condition condition)
     if (is_condition(condition))
         opcode_jp();
     else
-        get_word_from_pc();  // Consume unused word argument
+        (void)get_word_from_pc();  // Consume unused word argument
 }
 
 void CPU::opcode_jp(Address addr)
@@ -307,7 +304,7 @@ void CPU::opcode_jr(Condition condition)
     if (is_condition(condition))
         opcode_jr();
     else
-        get_signed_byte_from_pc();  // Consume unused argument
+        (void)get_signed_byte_from_pc();  // Consume unused argument
 }
 
 /* HALT */
@@ -392,32 +389,30 @@ void CPU::opcode_ldd(Address address, FlagRegister reg)
 /* LDH */
 void CPU::opcode_ldh_into_a()
 {
-    u8 offset    = get_byte_from_pc();
-    auto address = Address(0xFF00 + offset);
-
-    u8 value = mmu.read(address);
+    auto const offset  = get_byte_from_pc();
+    auto const address = Address(0xFF00 + offset);
+    auto const value   = mmu.read(address);
     a.set(value);
 }
 
 void CPU::opcode_ldh_into_data()
 {
-    u8 offset    = get_byte_from_pc();
-    auto address = Address(0xFF00 + offset);
-
+    auto const offset  = get_byte_from_pc();
+    auto const address = Address(0xFF00 + offset);
     mmu.write(address, a.value());
 }
 
 void CPU::opcode_ldh_into_c()
 {
-    u8 offset    = c.value();
-    auto address = Address(0xFF00 + offset);
+    auto const offset  = c.value();
+    auto const address = Address(0xFF00 + offset);
 
     mmu.write(address, a.value());
 }
 
 void CPU::opcode_ldh_c_into_a()
 {
-    auto address = Address(0xFF00 + c.value());
+    auto const address = Address(0xFF00 + c.value());
 
     a.set(mmu.read(address));
 }
@@ -425,10 +420,10 @@ void CPU::opcode_ldh_c_into_a()
 /* LDHL */
 void CPU::opcode_ldhl()
 {
-    u16 reg  = sp.value();
-    s8 value = get_signed_byte_from_pc();
+    auto const reg   = sp.value();
+    auto const value = get_signed_byte_from_pc();
 
-    int result = static_cast<int>(reg + value);
+    int const result = static_cast<int>(reg + value);
 
     set_flag_zero(false);
     set_flag_subtract(false);

@@ -1,13 +1,13 @@
 #include "mmu.hpp"
 
-#include "boot.h"
+#include "boot.hpp"
 #include "cpu/cpu.hpp"
-#include "input.h"
-#include "serial.h"
-#include "timer.h"
-#include "util/bitwise.h"
+#include "input.hpp"
+#include "serial.hpp"
+#include "timer.hpp"
+#include "util/bitwise.hpp"
 #include "util/log.h"
-#include "video/video.h"
+#include "video/video.hpp"
 
 MMU::MMU(Cartridge& inCartridge,
          CPU& inCPU,
@@ -25,43 +25,43 @@ MMU::MMU(Cartridge& inCartridge,
     memory = std::vector<u8>(0x10000);
 }
 
-auto MMU::read(Address address) const -> u8
+auto MMU::read(Address const address) const -> u8
 {
     /* VRAM */
-    if (in_range(address, {0x8000, 0x9FFF}))
+    if (in_range<0x8000, 0x9FFF>(address))
         return memory_read(address);
 
     /* Mapped IO */
-    if (in_range(address, {0xFF00, 0xFF7F}))
+    if (in_range<0xFF00, 0xFF7F>(address))
         return read_io(address);
 
-    if (in_range(address, {0x0, 0x7FFF})) {
-        if (in_range(address, {0x0, 0xFF}) && boot_rom_active())
+    if (in_range<0x0, 0x7FFF>(address)) {
+        if (in_range<0x0, 0xFF>(address) && boot_rom_active())
             return bootDMG[address.value()];
         else
             return cartridge.read(address);
     }
 
     /* Zero Page ram */
-    if (in_range(address, {0xFF80, 0xFFFE}))
+    if (in_range<0xFF80, 0xFFFE>(address))
         return memory_read(address);
 
     /* External (cartridge) RAM */
-    if (in_range(address, {0xA000, 0xBFFF}))
+    if (in_range<0xA000, 0xBFFF>(address))
         return cartridge.read(address);
 
     /* Internal work RAM */
-    if (in_range(address, {0xC000, 0xDFFF}))
+    if (in_range<0xC000, 0xDFFF>(address))
         return memory_read(address);
 
-    if (in_range(address, {0xE000, 0xFDFF}))
+    if (in_range<0xE000, 0xFDFF>(address))
         return memory_read(address - 0x2000);
 
     /* OAM */
-    if (in_range(address, {0xFE00, 0xFE9F}))
+    if (in_range<0xFE00, 0xFE9F>(address))
         return memory_read(address);
 
-    if (in_range(address, {0xFEA0, 0xFEFF})) {
+    if (in_range<0xFEA0, 0xFEFF>(address)) {
         log_warn("Attempting to read from unusable memory 0x%x",
                  address.value());
         return 0xFF;
@@ -75,12 +75,12 @@ auto MMU::read(Address address) const -> u8
                 address.value());
 }
 
-u8 MMU::memory_read(const Address& address) const
+u8 MMU::memory_read(Address const address) const
 {
     return memory.at(address.value());
 }
 
-u8 MMU::read_io(const Address& address) const
+auto MMU::read_io(Address const address) const -> u8
 {
     switch (address.value()) {
         case 0xFF00: return input.get_input();
@@ -177,58 +177,58 @@ u8 MMU::read_io(const Address& address) const
     }
 }
 
-void MMU::write(Address address, const u8 byte)
+void MMU::write(Address const address, u8 const byte)
 {
-    if (in_range(address, {0x0000, 0x7FFF})) {
+    if (in_range<0x0000, 0x7FFF>(address)) {
         cartridge.write(address, byte);
         return;
     }
 
     /* VRAM */
-    if (in_range(address, {0x8000, 0x9FFF})) {
+    if (in_range<0x8000, 0x9FFF>(address)) {
         memory_write(address, byte);
         return;
     }
 
     /* External (cartridge) RAM */
-    if (in_range(address, {0xA000, 0xBFFF})) {
+    if (in_range<0xA000, 0xBFFF>(address)) {
         cartridge.write(address, byte);
         return;
     }
 
     /* Internal work RAM */
-    if (in_range(address, {0xC000, 0xDFFF})) {
+    if (in_range<0xC000, 0xDFFF>(address)) {
         memory_write(address, byte);
         return;
     }
 
     /* Mirrored RAM */
-    if (in_range(address, {0xE000, 0xFDFF})) {
+    if (in_range<0xE000, 0xFDFF>(address)) {
         log_warn("Attempting to write to mirrored work RAM");
         memory_write(address - 0x2000, byte);
         return;
     }
 
     /* OAM */
-    if (in_range(address, {0xFE00, 0xFE9F})) {
+    if (in_range<0xFE00, 0xFE9F>(address)) {
         memory_write(address, byte);
         return;
     }
 
-    if (in_range(address, {0xFEA0, 0xFEFF})) {
+    if (in_range<0xFEA0, 0xFEFF>(address)) {
         log_warn("Attempting to write to unusable memory 0x%x - 0x%x",
                  address.value(), byte);
         return;
     }
 
     /* Mapped IO */
-    if (in_range(address, {0xFF00, 0xFF7F})) {
+    if (in_range<0xFF00, 0xFF7F>(address)) {
         write_io(address, byte);
         return;
     }
 
     /* Zero Page ram */
-    if (in_range(address, {0xFF80, 0xFFFE})) {
+    if (in_range<0xFF80, 0xFFFE>(address)) {
         memory_write(address, byte);
         return;
     }
@@ -243,7 +243,7 @@ void MMU::write(Address address, const u8 byte)
                 address.value());
 }
 
-void MMU::write_io(const Address& address, const u8 byte)
+void MMU::write_io(Address const address, u8 const byte)
 {
     switch (address.value()) {
         case 0xFF00: input.write(byte); return;
@@ -400,18 +400,18 @@ void MMU::write_io(const Address& address, const u8 byte)
     }
 }
 
-void MMU::memory_write(const Address& address, const u8 byte)
+void MMU::memory_write(Address const address, u8 const byte)
 {
     memory.at(address.value()) = byte;
 }
 
 bool MMU::boot_rom_active() const { return read(0xFF50) != 0x1; }
 
-void MMU::dma_transfer(const u8 byte)
+void MMU::dma_transfer(u8 const byte)
 {
     Address start_address = byte * 0x100;
 
-    for (u8 i = 0x0; i <= 0x9F; i++) {
+    for (u8 i = 0x0; i <= 0x9F; ++i) {
         Address from_address = start_address.value() + i;
         Address to_address   = 0xFE00 + i;
 

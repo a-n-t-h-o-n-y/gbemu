@@ -1,7 +1,7 @@
 #ifndef GBEMU_REGISTER_HPP
 #define GBEMU_REGISTER_HPP
-#include "definitions.h"
-#include "util/bitwise.h"
+#include "definitions.hpp"
+#include "util/bitwise.hpp"
 
 class FlagRegister {
    public:

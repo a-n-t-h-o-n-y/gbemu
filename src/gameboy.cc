@@ -1,4 +1,4 @@
-#include "gameboy.h"
+#include "gameboy.hpp"
 
 Gameboy::Gameboy(Cartridge& cart, Options& options)
     : cartridge{cart},
@@ -35,8 +35,8 @@ void Gameboy::debug_toggle_window()
     video.debug_disable_window = !video.debug_disable_window;
 }
 
-void Gameboy::run(const should_close_callback_t& _should_close_callback,
-                  const vblank_callback_t& _vblank_callback)
+void Gameboy::run(const Should_close_callback_t& _should_close_callback,
+                  const VBlank_callback_t& _vblank_callback)
 {
     should_close_callback = _should_close_callback;
 
@@ -50,7 +50,7 @@ void Gameboy::tick()
 {
     auto const cycles = cpu.tick();
     video.tick(cycles);
-    timer.tick(cycles.cycles);
+    // timer.tick(cycles); // TODO Not Implemented Yet
 }
 
 const std::vector<u8>& Gameboy::get_cartridge_ram() const

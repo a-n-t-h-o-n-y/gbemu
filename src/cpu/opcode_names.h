@@ -1,7 +1,10 @@
-#pragma once
-/* clang-format off */
+#ifndef GBEMU_CPU_OPCODE_NAMES_HPP
+#define GBEMU_CPU_OPCODE_NAMES_HPP
+#include <array>
+#include <string>
 
-static const std::string opcode_names[256] = {
+// clang-format off
+inline auto const opcode_names = std::array<std::string, 256>{
     "NOP",
     "LD BC,nn",
     "LD (BC),A",
@@ -275,7 +278,7 @@ static const std::string opcode_names[256] = {
     "RST 0x38"
 };
 
-static const std::string opcode_cb_names[256] = {
+inline auto const opcode_cb_names = std::array<std::string, 256> {
     "RLC B",
     "RLC C",
     "RLC D",
@@ -548,3 +551,6 @@ static const std::string opcode_cb_names[256] = {
     "SET 7 (HL)",
     "SET 7 A"
 };
+// clang-format on
+
+#endif  // GBEMU_CPU_OPCODE_NAMES_HPP
