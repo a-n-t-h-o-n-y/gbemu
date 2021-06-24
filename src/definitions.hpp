@@ -29,14 +29,14 @@ constexpr auto BG_MAP_SIZE    = uint{256};
 
 constexpr auto CLOCK_RATE = 4'194'304;
 
-enum class GBColor {
+enum class GBColor : u8 {
     Color0, /* White */
     Color1, /* Light gray */
     Color2, /* Dark gray */
     Color3  /* Black */
 };
 
-enum class Color { White, LightGray, DarkGray, Black };
+enum class Color : u8 { White, LightGray, DarkGray, Black };
 
 struct Palette {
     Color color0 = Color::White;

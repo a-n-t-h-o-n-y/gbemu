@@ -1,7 +1,7 @@
 #ifndef GBEMU_FRAMEBUFFER_HPP
 #define GBEMU_FRAMEBUFFER_HPP
 #include <algorithm>
-#include <vector>
+#include <array>
 
 #include "../definitions.hpp"
 
@@ -24,7 +24,7 @@ class FrameBuffer_impl {
     }
 
    private:
-    std::vector<Color> buffer_{width * height, Color::White};
+    std::array<Color, GAMEBOY_WIDTH * GAMEBOY_HEIGHT> buffer_;
 
    private:
     [[nodiscard]] constexpr static auto pixel_index(uint x, uint y) -> uint
